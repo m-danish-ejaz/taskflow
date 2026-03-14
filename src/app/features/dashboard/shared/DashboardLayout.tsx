@@ -1,6 +1,6 @@
 "use client";
-import Header from "@/app/features/admin/shared/Header";
-import Sidebar from "@/app/features/admin/shared/Sidebar";
+import Header from "@/app/features/dashboard/shared/Header";
+import Sidebar from "@/app/features/dashboard/shared/Sidebar";
 import { UserData } from "@/app/hooks/useAuth";
 import { useState, ReactNode, Dispatch, SetStateAction } from "react";
 
@@ -9,7 +9,7 @@ interface DashboardLayoutProps {
     activeTab: string;
     setActiveTab: Dispatch<SetStateAction<string>>;
     menuItems: any[];
-    user: UserData;
+    user: UserData | null;
     logout: () => void;
 }
 
@@ -44,7 +44,7 @@ export default function DashboardLayout({ children, activeTab, setActiveTab, men
 
                 {/* Scrollable Content */}
                 <main className="flex-1 overflow-y-auto p-4 lg:p-8">
-                    <div className="max-w-7xl mx-auto">
+                    <div className="max-w-full mx-auto">
                         {children}
                     </div>
                 </main>

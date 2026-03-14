@@ -5,6 +5,9 @@ export interface FormInput {
   uploaderPlaceholder?: string | undefined;
   uploaderNoteClass?: string | undefined;
   uploaderNote?: string | undefined;
+  wrapperClass?: string;  
+  labelClass?: string;
+  inputClass?: string;    
   className?: string;
   modelName: string;
   label?: string;

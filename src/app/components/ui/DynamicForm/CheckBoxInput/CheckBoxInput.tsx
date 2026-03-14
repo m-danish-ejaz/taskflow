@@ -1,23 +1,35 @@
 import React from "react";
 import { InputProps } from "../models/inputModel"; // Adjust the path accordingly
 import { Input } from "../../input/input";
+import { Label } from "../../label/label";
 
-const CheckboxInput: React.FC<InputProps> = ({ field, value, onChange }) => {
+const CheckboxInput: React.FC<InputProps> = ({
+  field,
+  value,
+  onChange,
+}) => {
+  const isRequired = field.validators?.some(v => v.type === "required");
+
   return (
-    <div className={`flex items-center gap-4 ${field.className}`}>
+    <div className={field.wrapperClass}>
       <Input
         type="checkbox"
         id={field.modelName}
         name={field.modelName}
-        checked={value === "true"} // Check if value is 'true'
+        checked={value === true || value === "true"}
         onChange={(e) =>
-          onChange(field.modelName, e.target.checked ? "true" : "false")
+          onChange(field.modelName, e.target.checked)
         }
-        className="h-6 w-auto rounded-full"
+        className={field.inputClass}
       />
-      {field.label}
+      <Label
+        className={field.labelClass}
+        htmlFor={field.modelName}
+      >
+        {field.label} {isRequired && <span className="text-rose-600">*</span>}
+      </Label>
     </div>
   );
 };
 
-export default CheckboxInput;
+export default CheckboxInput

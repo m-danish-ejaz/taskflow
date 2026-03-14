@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import CheckboxInput from "./CheckBoxInput/CheckBoxInput";
 import RadioInput from "./RadioInput/RadioInput";
 import { Button } from "@/app/components/ui/button/button";
@@ -17,6 +17,15 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const initialData = fields.reduce((acc, field) => {
+      acc[field.modelName] = field.value !== undefined ? field.value : "";
+      return acc;
+    }, {} as Record<string, any>);
+
+    setFormData(initialData);
+  }, [fields]);
 
   const handleChange = (name: string, value: any) => {
     setFormData((prevData) => ({ ...prevData, [name]: value }));
@@ -116,18 +125,24 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                 value={value}
                 onChange={handleChange}
                 error={error}
-                className={field.className}
+                wrapperClass={field.wrapperClass}
+                labelClass={field.labelClass}
+                inputClass={field.inputClass}
+              className={field.className}
               />
             );
           case "number":
-            return ( 
+            return (
               <TextInput
                 key={field.modelName}
                 field={field}
                 value={value}
                 onChange={handleChange}
                 error={error}
-                className={field.className}
+                wrapperClass={field.wrapperClass}
+                labelClass={field.labelClass}
+                inputClass={field.inputClass}
+              className={field.className}
               />
             );
           case "checkbox":
@@ -137,6 +152,9 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                 field={field}
                 value={value}
                 onChange={handleChange}
+                wrapperClass={field.wrapperClass}
+                labelClass={field.labelClass}
+                inputClass={field.inputClass}
                 className={field.className}
               />
             );
@@ -158,7 +176,10 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                 value={value}
                 onChange={handleChange}
                 error={error}
-                className={field.className}
+                wrapperClass={field.wrapperClass}
+                labelClass={field.labelClass}
+                inputClass={field.inputClass}
+              className={field.className}
               />
             );
           case "file":
@@ -183,7 +204,10 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                 value={value}
                 onChange={handleChange}
                 error={error}
-                className={field.className}
+                wrapperClass={field.wrapperClass}
+                labelClass={field.labelClass}
+                inputClass={field.inputClass}
+              className={field.className}
               />
             );
           default:

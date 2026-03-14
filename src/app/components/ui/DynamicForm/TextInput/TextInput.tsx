@@ -9,11 +9,12 @@ const TextInput: React.FC<InputProps & { error?: string }> = ({
   onChange,
   error,
 }) => {
+  const isRequired = field.validators?.some(v => v.type === "required");
   return (
     <div className="h-fit">
-      <div className={field.className}>
-        <Label className="mb-2" htmlFor={field.modelName}>
-          {field.label}
+      <div className={`flex flex-col ${field.wrapperClass || ""}`}>
+        <Label className={`text-sm font-medium ${field.labelClass}`} htmlFor={field.modelName}>
+          {field.label} {isRequired && <span className="text-rose-600">*</span>}
         </Label>
         <Input
           type={field.type}
@@ -22,7 +23,7 @@ const TextInput: React.FC<InputProps & { error?: string }> = ({
           value={value}
           onChange={(e) => onChange(field.modelName, e.target.value)}
           placeholder={field.placeholder}
-          className="h-full border-0 bg-transparent"
+          className={field.inputClass}
         />
       </div>
       {error && <p className="text-red-500 text-sm mt-2">{error}</p>}

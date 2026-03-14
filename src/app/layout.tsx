@@ -16,10 +16,11 @@ const geistMono = localFont({
 
 import { Poppins } from "next/font/google";
 import DebugTools from "./components/shared/DebugTools";
+import Providers from "./providers";
 
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"], // pick the weights you need
+  weight: ["400", "500", "600", "700"],
   variable: "--font-poppins",
 });
 
@@ -39,7 +40,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased`}
       >
-        {children}
+        <Providers>
+          {children}
+        </Providers>
         {process.env.NEXT_PUBLIC_DEBUG === "true" && <DebugTools />}
       </body>
     </html>

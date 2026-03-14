@@ -18,30 +18,17 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
             if (!user) {
                 router.replace("/");
             } else if (allowedRoles && !allowedRoles.includes(user.role)) {
-                if (user.role === "admin") {
-                    router.replace("/Pages/Admin");
-                } else {
-                    router.replace("/Pages/Worker");
-                }
+                router.replace("/Pages/Dashboard");
             }
         }
     }, [user, loading, router, allowedRoles]);
 
-    if (loading || !user) {
+    if (loading || !user || (allowedRoles && !allowedRoles.includes(user.role))) {
         return (
             <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
                 <LoadingSpinner />
             </div>
         );
     }
-
-    if (allowedRoles && !allowedRoles.includes(user.role)) {
-        return (
-            <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
-                <LoadingSpinner />
-            </div>
-        );
-    }
-
     return <>{children}</>;
 }

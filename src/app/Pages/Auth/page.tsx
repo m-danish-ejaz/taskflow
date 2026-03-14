@@ -22,11 +22,7 @@ const Login: FC = () => {
             try {
                 const session = JSON.parse(sessionStr);
                 if (Date.now() < session.expiresAt) {
-                    if (session.user.role === "admin") {
-                        router.replace("/Pages/Admin");
-                    } else {
-                        router.replace("/Pages/Worker");
-                    }
+                    router.replace("/Pages/Dashboard");
                 } else {
                     localStorage.removeItem("active_session");
                 }
@@ -84,11 +80,7 @@ const Login: FC = () => {
                 const user = await login(data.email, data.password);
                 if (user) {
                     toast({ title: "Success", description: "Login successfully" });
-                    if (user.role === "admin") {
-                        router.push("/Pages/Admin");
-                    } else {
-                        router.push("/Pages/Worker");
-                    }
+                    router.push("/Pages/Dashboard");
                 }
             } else {
                 const user = await signup(data);

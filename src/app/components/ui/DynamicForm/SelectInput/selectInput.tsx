@@ -8,12 +8,13 @@ const SelectInput: React.FC<InputProps> = ({
   onChange,
   error,
 }) => {
+  const isRequired = field.validators?.some(v => v.type === "required");
   return (
     <div className="h-fit">
-      <div className={field.className}>
+      <div className={`flex flex-col ${field.wrapperClass || ""}`}>
         {field.label && (
-          <Label className="mb-2" htmlFor={field.modelName}>
-            {field.label}
+          <Label className={`text-sm font-medium ${field.labelClass}`} htmlFor={field.modelName}>
+            {field.label} {isRequired && <span className="text-rose-600">*</span>}
           </Label>
         )}
         <select
@@ -21,8 +22,7 @@ const SelectInput: React.FC<InputProps> = ({
           name={field.modelName}
           value={value}
           onChange={(e) => onChange(field.modelName, e.target.value)}
-          className="h-full rounded-md bg-transparent px-2 py-1 text-white border-0"
-        >
+          className={field.inputClass}>
           <option value="" disabled className="text-slate-800">
             {field.placeholder || "Select an option"}
           </option>
@@ -30,7 +30,7 @@ const SelectInput: React.FC<InputProps> = ({
             <option
               key={index}
               value={option.value}
-              className="bg-black text-white"
+              className={field.className}
             >
               {option.label}
             </option>
