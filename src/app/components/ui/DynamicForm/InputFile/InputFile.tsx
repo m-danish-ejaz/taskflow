@@ -11,6 +11,7 @@ const FileInput: React.FC<InputProps> = ({ field, error, onChange }) => {
   const [files, setFiles] = useState<File[]>([]);
   const [modalImage, setModalImage] = useState<string | null>(null); // State for modal image
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const isRequired = field.validators?.some(v => v.type === "required");
 
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,12 +51,9 @@ const FileInput: React.FC<InputProps> = ({ field, error, onChange }) => {
 
       return (
         <div
-          key={index}
-          className="relative w-16 h-16 border border-gray-300 rounded-md cursor-pointer group"
-        >
+          key={index} className="relative w-16 h-16 border border-gray-300 rounded-md cursor-pointer group">
           {isImage ? (
             <>
-              {/* LazyImage Component */}
               <LazyImage
                 src={fileUrl}
                 thumb={blackBg}
@@ -92,20 +90,15 @@ const FileInput: React.FC<InputProps> = ({ field, error, onChange }) => {
   };
 
   return (
-    <div className="border-0 mt-6 col-span-full relative">
+    <div className={`border-0 mt-6 col-span-full relative ${field.wrapperClass}`}>
       {/* Label */}
-      <Label className="mb-4" htmlFor={field.modelName}>
-        {field.label}
+      <Label className={`text-sm font-medium ${field.labelClass}`} htmlFor={field.modelName}>
+        {field.label} {isRequired && <span className="text-rose-600">*</span>}
       </Label>
 
       {/* File Uploader */}
-      <div
-        className={`${field.className} flex flex-wrap items-center gap-3 rounded-lg`}
-      >
-        <div
-          className="flex items-center h-8 rounded-md cursor-pointer w-full justify-center border-2 border-dashed border-gray-400"
-          onClick={handleCustomClick}
-        >
+      <div className={`${field.inputClass} flex flex-wrap items-center gap-3 rounded-lg `}>
+        <div className="flex items-center h-8 rounded-md cursor-pointer w-full justify-center" onClick={handleCustomClick}>
           <div className="flex gap-3">
             <Upload className="text-gray-500 h-4 w-4" />
             <p className="text-xs text-gray-500">{field.uploaderPlaceholder}</p>
@@ -135,7 +128,7 @@ const FileInput: React.FC<InputProps> = ({ field, error, onChange }) => {
             onClick={closeModal}
           >
             <motion.div
-              className="relative rounded-3xl shadow-neon-green"
+              className="relative rounded-3xl "
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.8 }}

@@ -1,16 +1,23 @@
 const DB_NAME = "taskflow-db";
 const DB_VERSION = 1;
 
+let dbInstance: IDBDatabase | null = null;
+
 export const initDB = (): Promise<IDBDatabase> => {
+
+    if (dbInstance) return Promise.resolve(dbInstance);
+
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
         request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve(request.result);
-
+        request.onsuccess = () => {
+            dbInstance = request.result;
+            resolve(request.result);
+        };
         request.onupgradeneeded = (event) => {
             const db = (event.target as IDBOpenDBRequest).result;
-            
+
             // Create tables if they don't exist
             if (!db.objectStoreNames.contains("users")) {
                 db.createObjectStore("users", { keyPath: "email" }); // Email as unique ID
@@ -70,4 +77,16 @@ export const getAllRecords = async (storeName: string): Promise<any[]> => {
 export const delay = (min = 1000, max = 3000) => {
     const time = Math.random() * (max - min) + min;
     return new Promise((resolve) => setTimeout(resolve, time));
+};
+
+export const deleteRecord = async (storeName: string, key: string): Promise<void> => {
+    const db = await initDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(storeName, "readwrite");
+        const store = transaction.objectStore(storeName);
+        const request = store.delete(key);
+
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
 };

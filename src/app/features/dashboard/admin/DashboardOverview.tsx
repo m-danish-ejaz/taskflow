@@ -1,45 +1,104 @@
-import { Activity, ArrowDownRight, ArrowUpRight, DollarSign, Users } from "lucide-react";
+"use client";
+import { useQuery } from "@tanstack/react-query";
+import { DollarSign, ListChecks, Users, Clock, TrendingUp } from "lucide-react";
+import LoadingSpinner from "@/app/components/shared/loadingSpinner";
+import { getDashboardStats } from "@/app/services/dashboardService";
 
-export default function DashboardOverview(){
-    const stats = [
-        { title: "Total Revenue", value: "$45,231.89", trend: "+20.1%", isUp: true, icon: DollarSign },
-        { title: "Active Users", value: "2,350", trend: "+15.2%", isUp: true, icon: Users },
-        { title: "Bounce Rate", value: "12.5%", trend: "-4.1%", isUp: false, icon: Activity },
-    ];
+interface DashboardProps {
+    role: "admin" | "worker";
+}
+
+export default function DashboardOverview({ role }: DashboardProps) {
+    const { data: stats, isLoading } = useQuery({
+        queryKey: ["stats", role],
+        queryFn: () => getDashboardStats(role)
+    });
+
+    if (isLoading) return <LoadingSpinner />;
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            <h1 className="text-2xl font-bold text-slate-800">Overview</h1>
-
-            {/* Stat Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {stats.map((stat, i) => (
-                    <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-sm font-medium text-slate-500">{stat.title}</p>
-                                <h3 className="text-3xl font-bold text-slate-800 mt-2">{stat.value}</h3>
-                            </div>
-                            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                                <stat.icon size={20} />
-                            </div>
-                        </div>
-                        <div className="mt-4 flex items-center text-sm">
-                            <span className={`flex items-center font-medium ${stat.isUp ? 'text-emerald-600' : 'text-red-600'}`}>
-                                {stat.isUp ? <ArrowUpRight size={16} className="mr-1" /> : <ArrowDownRight size={16} className="mr-1" />}
-                                {stat.trend}
-                            </span>
-                            <span className="text-slate-400 ml-2">vs last month</span>
-                        </div>
-                    </div>
-                ))}
+        <div className="space-y-8 p-6">
+            {/* Header */}
+            <div>
+                <h1 className="text-2xl font-bold text-slate-800">Welcome back!</h1>
+                <p className="text-slate-500">Here is your {role} activity summary.</p>
             </div>
 
-            {/* Main Chart Area Mock */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-[400px] flex items-center justify-center flex-col">
-                <Activity size={48} className="text-blue-200 mb-4" />
-                <p className="text-slate-500 font-medium">Chart Visualization Area</p>
+            {/* Stats Grid - Role Specific */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {role === "admin" ? (
+                    <>
+                        <StatCard title="Total Tasks" value={stats?.totalTasks} icon={ListChecks} color="text-blue-600" />
+                        <StatCard title="Pending Reviews" value={stats?.pendingSubmissions} icon={Clock} color="text-amber-600" />
+                        <StatCard title="Total Submissions" value={stats?.totalSubmissions} icon={Users} color="text-emerald-600" />
+                    </>
+                ) : (
+                    <>
+                        <StatCard title="Total Earnings" value={`$${stats?.totalEarnings.toFixed(2)}`} icon={DollarSign} color="text-emerald-600" />
+                        <StatCard title="Available Tasks" value={stats?.activeTasks} icon={ListChecks} color="text-blue-600" />
+                        <StatCard title="Pending Review" value={stats?.pendingReview} icon={Clock} color="text-amber-600" />
+                    </>
+                )}
+            </div>
+
+            {/* Bottom Content - Role Specific */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {role === "admin" ? (
+                    <>
+                        <TopTasksList tasks={stats?.topPayingTasks} />
+                        <LatestSubmissions submissions={stats?.latestSubmissions} />
+                    </>
+                ) : (
+                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm col-span-2">
+                        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <TrendingUp className="text-blue-600" /> Recent Progress
+                        </h3>
+                        <p className="text-slate-500 text-sm">Keep completing tasks to increase your weekly earnings and unlock higher-paying tiers!</p>
+                    </div>
+                )}
             </div>
         </div>
     );
-};
+}
+
+// Helper Sub-components for clean code
+const StatCard = ({ title, value, icon: Icon, color }: any) => (
+    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+            <p className="text-sm text-slate-500 font-medium">{title}</p>
+            <h3 className="text-3xl font-bold mt-1 text-slate-800">{value}</h3>
+        </div>
+        <div className={`p-3 bg-slate-50 rounded-xl ${color}`}><Icon size={24} /></div>
+    </div>
+);
+
+const TopTasksList = ({ tasks }: any) => (
+    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <h3 className="text-lg font-bold text-slate-800 mb-4">Top Paying Tasks</h3>
+        <div className="space-y-4">
+            {tasks.map((t: any) => (
+                <div key={t.id} className="flex justify-between p-3 border-b last:border-0 hover:bg-slate-50 rounded-lg">
+                    <span className="text-sm font-medium text-slate-700">{t.title}</span>
+                    <span className="text-sm font-bold text-emerald-600">+${t.reward.toFixed(2)}</span>
+                </div>
+            ))}
+        </div>
+    </div>
+);
+
+const LatestSubmissions = ({ submissions }: any) => (
+    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <h3 className="text-lg font-bold text-slate-800 mb-4">Latest Submissions</h3>
+        <div className="space-y-4">
+            {submissions.map((s: any) => (
+                <div key={s.id} className="flex justify-between items-center p-3 border-b border-slate-100 last:border-0">
+                    <div>
+                        <p className="text-sm font-medium text-slate-700">{s.taskTitle}</p>
+                        <p className="text-xs text-slate-400">{new Date(s.date).toLocaleDateString()}</p>
+                    </div>
+                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">{s.status}</span>
+                </div>
+            ))}
+        </div>
+    </div>
+);

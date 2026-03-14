@@ -46,12 +46,12 @@ export const deleteTask = async (id: string) => {
     await deleteRecord("tasks", id);
 };
 
-export const bulkUpdateTasks = async (ids: string[], updates: { amount?: number; campaign_id?: string }) => {
-    await delay(1500, 2500);
+export const getAvailableTasks = async (sortBy: "latest" | "highest_reward") => {
+    await delay(500, 1000);
     const tasks = await getAllRecords("tasks");
-    for (const task of tasks) {
-        if (ids.includes(task.id)) {
-            await putRecord("tasks", { ...task, ...updates });
-        }
+    
+    if (sortBy === "highest_reward") {
+        return tasks.sort((a, b) => b.reward - a.reward);
     }
+    return tasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };

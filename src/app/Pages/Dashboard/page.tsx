@@ -7,13 +7,15 @@ import { LayoutDashboard, LayoutList, UserRound, Settings, ListChecks } from "lu
 import { useAuth } from "@/app/hooks/useAuth";
 import ProtectedRoute from "@/app/features/auth/ProtectedRoute";
 import TasksScreen from "@/app/features/dashboard/admin/TasksScreen";
+import TaskFeed from "@/app/features/dashboard/worker/TaskFeed";
+import SubmissionsScreen from "@/app/features/dashboard/admin/SubmissionsScreen";
 
 export default function Page() {
     const { user, logout } = useAuth();
-    const[activeTab, setActiveTab] = useState("dashboard");
+    const [activeTab, setActiveTab] = useState("dashboard");
 
     // Admin Tabs
-    const adminMenu =[
+    const adminMenu = [
         { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
         { id: "tasks", label: "Tasks", icon: LayoutList },
         { id: "submissions", label: "Submissions", icon: ListChecks },
@@ -22,9 +24,9 @@ export default function Page() {
     ];
 
     // Worker Tabs
-    const workerMenu =[
+    const workerMenu = [
         { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { id: "tasks", label: "My Tasks", icon: LayoutList },
+        { id: "tasks", label: "Tasks", icon: LayoutList },
         { id: "submissions", label: "My Submissions", icon: ListChecks },
     ];
 
@@ -34,18 +36,17 @@ export default function Page() {
     const renderContent = () => {
         switch (activeTab) {
             case "dashboard":
-                return user?.role === "admin" 
-                    ? <DashboardOverview /> 
-                    : <div className="text-2xl font-bold text-slate-800">Worker Overview Component Goes Here</div>; // Replace with <WorkerOverview />
-
+                return user?.role === "admin"
+                    ? <DashboardOverview role="admin" />
+                    : <DashboardOverview role="worker" />;
             case "tasks":
                 return user?.role === "admin"
                     ? <TasksScreen />
-                    : <div className="text-2xl font-bold text-slate-800">Worker's Assigned Tasks</div>;
+                    : <TaskFeed />;
 
             case "submissions":
                 return user?.role === "admin"
-                    ? <div className="text-2xl font-bold text-slate-800">Review All Submissions</div>
+                    ? <SubmissionsScreen/>
                     : <div className="text-2xl font-bold text-slate-800">My Personal Submissions</div>;
 
             // Admin Only Tabs
@@ -53,21 +54,21 @@ export default function Page() {
                 return <div className="text-2xl font-bold text-slate-800">Workers Management</div>;
             case "settings":
                 return <div className="text-2xl font-bold text-slate-800">System Settings</div>;
-            
+
             default:
-                return user?.role === "admin" 
-                    ? <DashboardOverview /> 
-                    : <div className="text-2xl font-bold text-slate-800">Worker Overview Component Goes Here</div>;
+                return user?.role === "admin"
+                    ? <DashboardOverview role="admin" />
+                    : <DashboardOverview role="worker" />;
         }
     };
 
     return (
         <ProtectedRoute allowedRoles={["admin", "worker"]}>
-            <DashboardLayout 
-                activeTab={activeTab} 
-                setActiveTab={setActiveTab} 
-                menuItems={menuItems} 
-                user={user} 
+            <DashboardLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                menuItems={menuItems}
+                user={user}
                 logout={logout}
             >
                 {renderContent()}

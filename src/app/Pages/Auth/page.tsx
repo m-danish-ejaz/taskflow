@@ -1,5 +1,5 @@
 "use client";
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import DynamicForm from "@/app/components/ui/DynamicForm/DynamicForm";
 import { DynamicFormProps } from "@/app/components/ui/DynamicForm/models/DynamicFormProps";
 import { login, signup } from "@/app/services/authService";
@@ -8,11 +8,12 @@ import { useRouter } from "next/navigation";
 import { Toaster } from "@/app/components/ui/toast/toaster";
 import { useToast } from "@/app/components/ui/toast/use-toast";
 import { delay } from "@/app/lib/db";
+import { exportIndexedDB, importIndexedDB } from "@/app/lib/utils";
 
 const Login: FC = () => {
     const router = useRouter();
     const { toast } = useToast();
-
+    const fileRef = useRef<HTMLInputElement | null>(null);
     const [mode, setMode] = useState<"login" | "signup">("login");
     const [loading, setLoading] = useState<boolean>(false);
 
@@ -32,8 +33,8 @@ const Login: FC = () => {
         }
     }, [router]);
 
-    const commonFieldClass =
-        "border-0 mt-2 border-gray-300 focus-within:border-green-400 flex flex-col border-b-[2px] transition-colors duration-300 font-montserrat rounded-none bg-transparent outline-none text-black";
+    const inputClass = "w-full mt-1 px-3 bg-transparent py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-900";
+    const labelClass = "text-xs font-semibold text-slate-500 uppercase tracking-wider";
 
     const loginFields: DynamicFormProps["fields"] = [
         {
@@ -41,7 +42,8 @@ const Login: FC = () => {
             modelName: "email",
             label: "Email Address",
             placeholder: "Email Address",
-            className: commonFieldClass,
+            labelClass,
+            inputClass,
             validators: [
                 { type: "required", message: "Email is required" },
                 { type: "pattern", value: /^[^\s@]+@[^\s@]+.[^\s@]+$/, message: "Invalid email" },
@@ -52,7 +54,8 @@ const Login: FC = () => {
             modelName: "password",
             placeholder: "***********",
             label: "Password",
-            className: commonFieldClass,
+            labelClass,
+            inputClass,
             validators: [
                 { type: "required", message: "Password is required" },
                 { type: "minLength", value: 6, message: "Minimum 6 characters" },
@@ -66,7 +69,8 @@ const Login: FC = () => {
             modelName: "name",
             placeholder: "Full Name",
             label: "Full Name",
-            className: commonFieldClass,
+            labelClass,
+            inputClass,
             validators: [{ type: "required", message: "Name is required" }],
         },
         ...loginFields,
@@ -101,11 +105,48 @@ const Login: FC = () => {
             setLoading(false);
         }
     };
+    const openFilePicker = () => {
+        fileRef.current?.click();
+    };
+    const importDataBase = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const text = await file.text();
+        const data = JSON.parse(text);
+
+        await importIndexedDB("taskflow-db", data);
+
+        toast({
+            title: "Database Imported",
+            description: "Data restored successfully",
+        });
+
+        window.location.reload();
+    };
     return (
         <div className="relative w-screen h-screen overflow-hidden flex items-center justify-center bg-white">
             {loading && <LoadingSpinner />}
             <div className="relative w-full max-w-md">
                 <div className="relative z-10 flex flex-col items-center w-full p-5 mt-3 rounded-3xl bg-slate-100 border border-slate-300 shadow-2xl text-black transition-all duration-500">
+                    <button onClick={() => exportIndexedDB("taskflow-db")} className="ml-2 text-blue-700 font-semibold hover:text-blue-400 transition-colors">
+                        Export Database
+                    </button>
+
+                    <button
+                        onClick={openFilePicker}
+                        className="ml-2 text-blue-700 font-semibold hover:text-blue-400 transition-colors"
+                    > Export Database
+                    </button>
+
+                    <input
+                        type="file"
+                        ref={fileRef}
+                        accept=".json"
+                        className="hidden"
+                        onChange={importDataBase}
+                    />
+
                     <h1 className="text-4xl mt-2 font-bold">
                         {mode === "login" ? "Welcome Back" : "Create Account"}
                     </h1>

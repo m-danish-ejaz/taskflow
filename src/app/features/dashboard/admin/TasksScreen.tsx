@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-table";
 import { Search, Plus, X, Trash2, Edit, ChevronDown, ChevronRight } from "lucide-react";
 
-import { getTasks, createTask, updateTask, deleteTask, bulkUpdateTasks } from "@/app/services/taskService";
+import { getTasks, createTask, updateTask, deleteTask } from "@/app/services/taskService";
 import LoadingSpinner from "@/app/components/shared/loadingSpinner";
 import { FormInput } from "@/app/Models/FormInputs";
 import DynamicForm from "@/app/components/ui/DynamicForm/DynamicForm";
@@ -21,7 +21,7 @@ const labelClass = "text-xs font-semibold text-slate-500 uppercase tracking-wide
 const taskFields: FormInput[] = [
     {
         modelName: "task_type",
-        label: "Task Type *",
+        label: "Task Type",
         type: "select",
         options: [
             { label: "Social Media Posting", value: "Social Media Posting" },
@@ -34,7 +34,7 @@ const taskFields: FormInput[] = [
     },
     {
         modelName: "campaign_id",
-        label: "Campaign ID *",
+        label: "Campaign ID",
         type: "text",
         placeholder: "e.g. Q1-Marketing",
         validators: [{ type: "required", message: "Campaign ID required" }],
@@ -42,7 +42,7 @@ const taskFields: FormInput[] = [
     },
     {
         modelName: "title",
-        label: "Title *",
+        label: "Title",
         type: "text",
         placeholder: "Task Title",
         validators: [
@@ -60,7 +60,7 @@ const taskFields: FormInput[] = [
     },
     {
         modelName: "details",
-        label: "Full Details (Instructions) *",
+        label: "Full Details (Instructions)",
         type: "textarea",
         placeholder: "Detailed instructions for the worker...",
         validators: [
@@ -71,7 +71,7 @@ const taskFields: FormInput[] = [
     },
     {
         modelName: "amount",
-        label: "Amount Needed *",
+        label: "Amount Needed",
         type: "number",
         wrapperClass: "col-span-1",
         validators: [{ type: "required", message: "Amount is required" }],
@@ -79,7 +79,7 @@ const taskFields: FormInput[] = [
     },
     {
         modelName: "reward",
-        label: "Reward (AUD) *",
+        label: "Reward (AUD)",
         type: "number",
         wrapperClass: "col-span-1",
         validators: [{ type: "required", message: "Reward is required" }],
@@ -131,14 +131,14 @@ export default function TasksScreen() {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks"] })
     });
 
-    const bulkUpdateMutation = useMutation({
-        mutationFn: async (payload: { ids: string[], updates: any }) => bulkUpdateTasks(payload.ids, payload.updates),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["tasks"] });
-            setRowSelection({});
-            setBulkCampaignId(""); setBulkAmount("");
-        }
-    });
+    // const bulkUpdateMutation = useMutation({
+    //     mutationFn: async (payload: { ids: string[], updates: any }) => bulkUpdateTasks(payload.ids, payload.updates),
+    //     onSuccess: () => {
+    //         queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    //         setRowSelection({});
+    //         setBulkCampaignId(""); setBulkAmount("");
+    //     }
+    // });
 
     const saveTaskMutation = useMutation({
         mutationFn: async (data: TaskFormValues) => {
