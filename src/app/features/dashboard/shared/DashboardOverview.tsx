@@ -6,14 +6,17 @@ import { getDashboardStats } from "@/app/services/dashboardService";
 
 interface DashboardProps {
     role: "admin" | "worker";
+    workerId?: string;
 }
 
-export default function DashboardOverview({ role }: DashboardProps) {
+export default function DashboardOverview({ role, workerId }: DashboardProps) {
     const { data: stats, isLoading } = useQuery({
-        queryKey: ["stats", role],
-        queryFn: () => getDashboardStats(role)
-    });
+        queryKey: ["stats", role, workerId],
+        queryFn: () => getDashboardStats(role, workerId),
+        enabled: role === 'admin' || (role === 'worker' && !!workerId)
 
+    });
+    
     if (isLoading) return <LoadingSpinner />;
 
     return (
@@ -49,17 +52,50 @@ export default function DashboardOverview({ role }: DashboardProps) {
                         <LatestSubmissions submissions={stats?.latestSubmissions} />
                     </>
                 ) : (
-                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm col-span-2">
-                        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <TrendingUp className="text-blue-600" /> Recent Progress
-                        </h3>
-                        <p className="text-slate-500 text-sm">Keep completing tasks to increase your weekly earnings and unlock higher-paying tiers!</p>
-                    </div>
+                    <RecentSubmissions submissions={stats?.latestSubmissions ?? []} />
                 )}
             </div>
         </div>
     );
 }
+
+const StatusBadge = ({ status }: { status: string }) => {
+    const styles = {
+        approved: 'bg-emerald-100 text-emerald-700',
+        rejected: 'bg-red-100 text-red-700',
+        pending: 'bg-amber-100 text-amber-700',
+    };
+
+    // Use a default style for any other status
+    const style = styles[status as keyof typeof styles] || 'bg-slate-100 text-slate-700';
+
+    return (
+        <span className={`text-xs font-bold uppercase px-2 py-1 rounded-full ${style}`}>
+            {status}
+        </span>
+    );
+};
+
+// The new component to display the worker's recent activity
+const RecentSubmissions = ({ submissions = [] }: { submissions: any[] }) => (
+    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm col-span-2">
+        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <TrendingUp className="text-blue-600" /> Recent Activity
+        </h3>
+        {submissions.length > 0 ? (
+            <div className="space-y-3">
+                {submissions.map((s: any) => (
+                    <div key={s.id} className="flex justify-between items-center p-3 hover:bg-slate-50 rounded-lg">
+                        <p className="text-sm font-medium text-slate-700">{s.taskTitle}</p>
+                        <StatusBadge status={s.status} />
+                    </div>
+                ))}
+            </div>
+        ) : (
+            <p className="text-slate-500 text-sm text-center py-4">You have no recent submissions. Go complete a task!</p>
+        )}
+    </div>
+);
 
 // Helper Sub-components for clean code
 const StatCard = ({ title, value, icon: Icon, color }: any) => (

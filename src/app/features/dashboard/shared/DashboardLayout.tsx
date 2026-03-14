@@ -40,7 +40,7 @@ export default function DashboardLayout({ children, activeTab, setActiveTab, men
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-                <Header toggleMobile={() => setIsMobileOpen(true)} user={user} logout={logout} />
+                <Header toggleMobile={() => setIsMobileOpen(true)} user={user} logout={logout} setActiveTab={setActiveTab} />
 
                 {/* Scrollable Content */}
                 <main className="flex-1 overflow-y-auto p-4 lg:p-8">

@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import { Toaster } from "@/app/components/ui/toast/toaster";
 import { useToast } from "@/app/components/ui/toast/use-toast";
 import { delay } from "@/app/lib/db";
-import { exportIndexedDB, importIndexedDB } from "@/app/lib/utils";
 
 const Login: FC = () => {
     const router = useRouter();
@@ -105,48 +104,12 @@ const Login: FC = () => {
             setLoading(false);
         }
     };
-    const openFilePicker = () => {
-        fileRef.current?.click();
-    };
-    const importDataBase = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
 
-        const text = await file.text();
-        const data = JSON.parse(text);
-
-        await importIndexedDB("taskflow-db", data);
-
-        toast({
-            title: "Database Imported",
-            description: "Data restored successfully",
-        });
-
-        window.location.reload();
-    };
     return (
         <div className="relative w-screen h-screen overflow-hidden flex items-center justify-center bg-white">
             {loading && <LoadingSpinner />}
             <div className="relative w-full max-w-md">
                 <div className="relative z-10 flex flex-col items-center w-full p-5 mt-3 rounded-3xl bg-slate-100 border border-slate-300 shadow-2xl text-black transition-all duration-500">
-                    <button onClick={() => exportIndexedDB("taskflow-db")} className="ml-2 text-blue-700 font-semibold hover:text-blue-400 transition-colors">
-                        Export Database
-                    </button>
-
-                    <button
-                        onClick={openFilePicker}
-                        className="ml-2 text-blue-700 font-semibold hover:text-blue-400 transition-colors"
-                    > Export Database
-                    </button>
-
-                    <input
-                        type="file"
-                        ref={fileRef}
-                        accept=".json"
-                        className="hidden"
-                        onChange={importDataBase}
-                    />
-
                     <h1 className="text-4xl mt-2 font-bold">
                         {mode === "login" ? "Welcome Back" : "Create Account"}
                     </h1>

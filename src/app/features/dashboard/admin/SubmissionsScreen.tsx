@@ -1,11 +1,13 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getSubmissions, updateSubmissionStatus } from "@/app/services/submissionService";
 import { deleteRecord, getAllRecords } from "@/app/lib/db";
 import { Check, X, Trash2 } from "lucide-react";
 import { useReactTable, getCoreRowModel, flexRender, ColumnDef } from "@tanstack/react-table";
 import LoadingSpinner from "@/app/components/shared/loadingSpinner";
+import RejectModal from "@/app/components/shared/modals/RejectModal";
+import BaseModal from "@/app/components/shared/modals/BaseModal";
 
 export default function SubmissionsScreen() {
     const queryClient = useQueryClient();
@@ -24,17 +26,13 @@ export default function SubmissionsScreen() {
 
     const deleteMutation = useMutation({
         mutationFn: (id: string) => deleteRecord("submissions", id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["submissions"], refetchType: 'all' });
-        }
+        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["submissions"] }) }
     });
 
     const statusMutation = useMutation({
         mutationFn: ({ id, status, reason }: { id: string, status: "approved" | "rejected", reason?: string }) =>
             updateSubmissionStatus(id, status, reason),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["submissions"] });
-        }
+        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["submissions"] }) }
     });
 
     const handleApprove = (id: string) => {
@@ -52,19 +50,14 @@ export default function SubmissionsScreen() {
         }
     };
 
-    const confirmReject = () => {
-        if (rejectionModal.id) {
-            statusMutation.mutate({ id: rejectionModal.id, status: 'rejected', reason });
-            setRejectionModal({ isOpen: false, id: null });
-            setReason("");
-        }
-    };
 
-    const tableData = submissions.map((sub: any) => ({
-        ...sub,
-        workerName: users.find((u: any) => u.id === sub.worker_id)?.name || "Unknown",
-        taskDetails: tasks.find((t: any) => t.id === sub.task_id)?.details || "N/A"
-    }));
+    const tableData = useMemo(() => {
+        return submissions.map((sub: any) => ({
+            ...sub,
+            workerName: users.find((u: any) => u.id === sub.worker_id)?.name || "Unknown",
+            taskDetails: tasks.find((t: any) => t.id === sub.task_id)?.details || "N/A"
+        }));
+    }, [submissions, users, tasks]);
 
     const columns: ColumnDef<any>[] = [
         { accessorKey: "workerName", header: "Worker" },
@@ -153,69 +146,38 @@ export default function SubmissionsScreen() {
 
     if (isLoadingSub) return <LoadingSpinner />;
 
-    {/* Rejection Reason Modal */ }
-    {
-        rejectionModal.isOpen && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
-                    <h3 className="font-bold text-lg text-slate-800">Reject Submission</h3>
-                    <p className="text-sm text-slate-600">Please provide a reason for rejecting this submission.</p>
-                    <textarea
-                        autoFocus
-                        className="w-full p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none"
-                        rows={3}
-                        value={reason}
-                        onChange={(e) => setReason(e.target.value)}
-                        placeholder="Enter rejection reason..."
-                    />
-                    <div className="flex gap-3 justify-end">
-                        <button
-                            onClick={() => setRejectionModal({ isOpen: false, id: null })}
-                            className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={confirmReject}
-                            disabled={!reason.trim()}
-                            className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50"
-                        >
-                            Confirm Rejection
-                        </button>
-                    </div>
-                </div>
-            </div>
-        )
-    }
 
-    {/* Delete Confirmation Modal */ }
-    {
-        deleteModal.isOpen && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
-                    <h3 className="font-bold text-lg text-slate-800">Delete Submission</h3>
-                    <p className="text-sm text-slate-600">Are you sure you want to delete this submission? This action cannot be undone.</p>
-                    <div className="flex gap-3 justify-end pt-2">
-                        <button
-                            onClick={() => setDeleteModal({ isOpen: false, id: null })}
-                            className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={confirmDelete}
-                            className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg"
-                        >
-                            Yes, Delete
-                        </button>
-                    </div>
-                </div>
-            </div>
-        )
-    }
-    
     return (
         <div className="p-6">
+
+            {/* Rejection Reason Modal */}
+            {rejectionModal.isOpen && (
+                <RejectModal
+                    isOpen={rejectionModal.isOpen}
+                    onClose={() => setRejectionModal({ isOpen: false, id: null })}
+                    onConfirm={(reason: string) => {
+                        statusMutation.mutate({ id: rejectionModal.id!, status: 'rejected', reason });
+                        setRejectionModal({ isOpen: false, id: null });
+                    }}
+                />
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteModal.isOpen && (
+                <BaseModal
+                    isOpen={deleteModal.isOpen}
+                    onClose={() => setDeleteModal({ isOpen: false, id: null })}
+                    containerClassName="max-w-md border-t-4 border-red-500"
+                >
+                    <h3 className="font-bold text-lg">Are you sure?</h3>
+                    <p className="text-sm text-slate-600">This action cannot be undone.</p>
+                    <div className="flex justify-end gap-2">
+                        <button onClick={() => setDeleteModal({ isOpen: false, id: null })}>Cancel</button>
+                        <button onClick={confirmDelete} className="bg-red-600 text-white px-4 py-2 rounded">Delete</button>
+                    </div>
+                </BaseModal>
+            )}
+
             <h2 className="text-2xl font-bold text-slate-800 mb-6">Submissions Review</h2>
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <table className="w-full text-left text-sm text-slate-800">

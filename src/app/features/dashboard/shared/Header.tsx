@@ -2,14 +2,18 @@
 import { useState } from "react";
 import { Menu, User, LogOut, Settings, UserIcon } from "lucide-react";
 import { UserData } from "@/app/hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 interface HeaderProps {
     toggleMobile: () => void;
     user: UserData | null;
     logout: () => void;
+    setActiveTab: (tab: string) => void;
 }
 
-export default function Header({ toggleMobile, user, logout }: HeaderProps) {
+export default function Header({ toggleMobile, user, logout, setActiveTab }: HeaderProps) {
+    const router = useRouter();
+
     const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     const getInitials = (name?: string) => {
@@ -55,11 +59,13 @@ export default function Header({ toggleMobile, user, logout }: HeaderProps) {
                                 </span>
                             </div>
                             <div className="py-1">
-                                <button className="w-full flex items-center px-4 py-2 text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                                <button
+                                    className="w-full flex items-center px-4 py-2 text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                    onClick={() => {
+                                        setActiveTab("settings");
+                                        setIsProfileOpen(false);
+                                    }}>
                                     <UserIcon size={16} className="mr-3" /> My Profile
-                                </button>
-                                <button className="w-full flex items-center px-4 py-2 text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">
-                                    <Settings size={16} className="mr-3" /> Account Settings
                                 </button>
                             </div>
                             <div className="border-t border-slate-200 py-1">

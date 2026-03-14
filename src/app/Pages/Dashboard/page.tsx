@@ -1,14 +1,16 @@
 "use client";
 import { useState } from "react";
 import DashboardLayout from "@/app/features/dashboard/shared/DashboardLayout";
-import DashboardOverview from "@/app/features/dashboard/admin/DashboardOverview";
-// import WorkerOverview from "@/app/features/dashboard/worker/WorkerOverview"; <--- Import your worker dashboard here
-import { LayoutDashboard, LayoutList, UserRound, Settings, ListChecks } from "lucide-react";
+import DashboardOverview from "@/app/features/dashboard/shared/DashboardOverview";
+import { LayoutDashboard, LayoutList, UserRound, ListChecks } from "lucide-react";
 import { useAuth } from "@/app/hooks/useAuth";
 import ProtectedRoute from "@/app/features/auth/ProtectedRoute";
 import TasksScreen from "@/app/features/dashboard/admin/TasksScreen";
 import TaskFeed from "@/app/features/dashboard/worker/TaskFeed";
 import SubmissionsScreen from "@/app/features/dashboard/admin/SubmissionsScreen";
+import WorkersScreen from "@/app/features/dashboard/admin/WorkersScreen";
+import ProfileSettings from "@/app/features/dashboard/shared/ProfileSettings";
+import WorkerSubmissionsScreen from "@/app/features/dashboard/worker/WorkerSubmissionsScreen";
 
 export default function Page() {
     const { user, logout } = useAuth();
@@ -20,7 +22,6 @@ export default function Page() {
         { id: "tasks", label: "Tasks", icon: LayoutList },
         { id: "submissions", label: "Submissions", icon: ListChecks },
         { id: "workers", label: "Workers", icon: UserRound },
-        { id: "settings", label: "Settings", icon: Settings },
     ];
 
     // Worker Tabs
@@ -37,8 +38,8 @@ export default function Page() {
         switch (activeTab) {
             case "dashboard":
                 return user?.role === "admin"
-                    ? <DashboardOverview role="admin" />
-                    : <DashboardOverview role="worker" />;
+                    ? <DashboardOverview role="admin" workerId={user?.id} />
+                    : <DashboardOverview role="worker" workerId={user?.id} />;
             case "tasks":
                 return user?.role === "admin"
                     ? <TasksScreen />
@@ -46,19 +47,19 @@ export default function Page() {
 
             case "submissions":
                 return user?.role === "admin"
-                    ? <SubmissionsScreen/>
-                    : <div className="text-2xl font-bold text-slate-800">My Personal Submissions</div>;
+                    ? <SubmissionsScreen />
+                    : <WorkerSubmissionsScreen workerId={user?.id ?? ""} />;
 
             // Admin Only Tabs
             case "workers":
-                return <div className="text-2xl font-bold text-slate-800">Workers Management</div>;
+                return <WorkersScreen />;
             case "settings":
-                return <div className="text-2xl font-bold text-slate-800">System Settings</div>;
+                return <ProfileSettings user={user!} />;
 
             default:
                 return user?.role === "admin"
-                    ? <DashboardOverview role="admin" />
-                    : <DashboardOverview role="worker" />;
+                    ? <DashboardOverview role="admin" workerId={user?.id} />
+                    : <DashboardOverview role="worker" workerId={user?.id} />;
         }
     };
 

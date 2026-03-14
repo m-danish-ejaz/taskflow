@@ -14,10 +14,10 @@ import { getTasks, createTask, updateTask, deleteTask } from "@/app/services/tas
 import LoadingSpinner from "@/app/components/shared/loadingSpinner";
 import { FormInput } from "@/app/Models/FormInputs";
 import DynamicForm from "@/app/components/ui/DynamicForm/DynamicForm";
+import BaseModal from "@/app/components/shared/modals/BaseModal";
 
 const inputClass = "w-full mt-1 px-3 bg-transparent py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-900";
 const labelClass = "text-xs font-semibold text-slate-500 uppercase tracking-wider";
-
 const taskFields: FormInput[] = [
     {
         modelName: "task_type",
@@ -95,6 +95,7 @@ const taskFields: FormInput[] = [
     }
 ];
 
+
 // --- 1. ZOD SCHEMA FOR COMPOSER ---
 const taskSchema = z.object({
     task_type: z.enum(["Social Media Posting", "Email Sending", "Social Media Liking"], {
@@ -120,8 +121,8 @@ export default function TasksScreen() {
     // Table States
     const [globalFilter, setGlobalFilter] = useState("");
     const [rowSelection, setRowSelection] = useState({});
-    const [bulkCampaignId, setBulkCampaignId] = useState("");
-    const [bulkAmount, setBulkAmount] = useState<number | "">("");
+
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
     // --- 2. DATA FETCHING & MUTATIONS ---
     const { data: tasks = [], isLoading } = useQuery({ queryKey: ["tasks"], queryFn: getTasks });
@@ -130,15 +131,6 @@ export default function TasksScreen() {
         mutationFn: deleteTask,
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks"] })
     });
-
-    // const bulkUpdateMutation = useMutation({
-    //     mutationFn: async (payload: { ids: string[], updates: any }) => bulkUpdateTasks(payload.ids, payload.updates),
-    //     onSuccess: () => {
-    //         queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    //         setRowSelection({});
-    //         setBulkCampaignId(""); setBulkAmount("");
-    //     }
-    // });
 
     const saveTaskMutation = useMutation({
         mutationFn: async (data: TaskFormValues) => {
@@ -181,7 +173,13 @@ export default function TasksScreen() {
         };
         saveTaskMutation.mutate(formattedData);
     };
-
+    
+    const confirmDelete = () => {
+        if (deleteModal.id) {
+            deleteMutation.mutate(deleteModal.id);
+            setDeleteModal({ isOpen: false, id: null });
+        }
+    };
     // --- 4. TABLE COLUMNS ---
     const columns: ColumnDef<any>[] = [
         {
@@ -218,7 +216,9 @@ export default function TasksScreen() {
             id: "actions", header: "Actions", cell: ({ row }) => (
                 <div className="flex items-center gap-2">
                     <button onClick={() => openComposer(row.original)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit size={16} /></button>
-                    <button onClick={() => confirm("Delete this task?") && deleteMutation.mutate(row.original.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={16} /></button>
+                    <button onClick={() => setDeleteModal({ isOpen: true, id: row.original.id })} className="p-1.5 bg-slate-50 text-slate-500 rounded-lg hover:bg-red-100 hover:text-red-600">
+                        <Trash2 size={16} />
+                    </button>
                 </div>
             )
         }
@@ -237,6 +237,20 @@ export default function TasksScreen() {
 
     return (
         <div className="relative h-full flex flex-col space-y-4 ">
+            {deleteModal.isOpen && (
+                <BaseModal
+                    isOpen={deleteModal.isOpen}
+                    onClose={() => setDeleteModal({ isOpen: false, id: null })}
+                    containerClassName="max-w-md border-t-4 border-red-500"
+                >
+                    <h3 className="font-bold text-lg">Are you sure?</h3>
+                    <p className="text-sm text-slate-600">This action cannot be undone.</p>
+                    <div className="flex justify-end gap-2">
+                        <button onClick={() => setDeleteModal({ isOpen: false, id: null })}>Cancel</button>
+                        <button onClick={confirmDelete} className="bg-red-600 text-white px-4 py-2 rounded">Delete</button>
+                    </div>
+                </BaseModal>
+            )}
             {/* --- HEADER --- */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h2 className="text-2xl font-bold text-slate-800">Tasks</h2>
