@@ -21,7 +21,7 @@ const UnderConstruction: React.FC = () => {
       <div className="relative flex flex-col justify-center items-center text-center p-6 bg-black shadow-2xl shadow-black bg-opacity-5 backdrop-blur-lg rounded-3xl border-white border-2">
         <div className="flex justify-center relative h-auto bg-white p-2 rounded-lg shadow-2xl shadow-black backdrop-blur-lg w-full">
           <Link to="/home">
-            <img src={logo} alt="Logo" className="relative h-16 top-0" />
+            <img src={logo.src} alt="Logo" className="relative h-16 top-0" />
           </Link>
         </div>
         <h1 className="text-5xl font-inter font-bold text-white mt-12">

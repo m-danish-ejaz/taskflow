@@ -1,19 +1,40 @@
 "use client";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import DynamicForm from "@/app/components/ui/DynamicForm/DynamicForm";
 import { DynamicFormProps } from "@/app/components/ui/DynamicForm/models/DynamicFormProps";
 import { login, signup } from "@/app/services/authService";
-import LoadingSpinner from "@/app/components/shared/LoadingSpinner/loadingSpinner";
-import { delay } from "@/app/lib/delay";
+import LoadingSpinner from "@/app/components/shared/loadingSpinner";
 import { useRouter } from "next/navigation";
+import { Toaster } from "@/app/components/ui/toast/toaster";
+import { useToast } from "@/app/components/ui/toast/use-toast";
+import { delay } from "@/app/lib/db";
 
 const Login: FC = () => {
     const router = useRouter();
+    const { toast } = useToast();
 
     const [mode, setMode] = useState<"login" | "signup">("login");
-    const [error, setError] = useState<string | null>(null);
-
     const [loading, setLoading] = useState<boolean>(false);
+
+    useEffect(() => {
+        const sessionStr = localStorage.getItem("active_session");
+        if (sessionStr) {
+            try {
+                const session = JSON.parse(sessionStr);
+                if (Date.now() < session.expiresAt) {
+                    if (session.user.role === "admin") {
+                        router.replace("/Pages/Admin");
+                    } else {
+                        router.replace("/Pages/Worker");
+                    }
+                } else {
+                    localStorage.removeItem("active_session");
+                }
+            } catch (e) {
+                localStorage.removeItem("active_session");
+            }
+        }
+    }, [router]);
 
     const commonFieldClass =
         "border-0 mt-2 border-gray-300 focus-within:border-green-400 flex flex-col border-b-[2px] transition-colors duration-300 font-montserrat rounded-none bg-transparent outline-none text-black";
@@ -56,22 +77,34 @@ const Login: FC = () => {
     ];
 
     const handleSubmit = async (data: any) => {
-        setError(null);
         setLoading(true);
         try {
             await delay();
             if (mode === "login") {
                 const user = await login(data.email, data.password);
-                console.log("Logged in user:", user);
-                router.push("/Pages/Admin");
+                if (user) {
+                    toast({ title: "Success", description: "Login successfully" });
+                    if (user.role === "admin") {
+                        router.push("/Pages/Admin");
+                    } else {
+                        router.push("/Pages/Worker");
+                    }
+                }
             } else {
                 const user = await signup(data);
-                console.log("Signed up user:", user);
-                setMode("login");
-                setError(null);
+                if (user) {
+                    setMode("login");
+                    toast({ title: "Success", description: "Account created successfully" });
+                } else {
+                    toast({ variant: "destructive", title: "Error", description: "Failed to create Account" });
+                }
             }
         } catch (e: any) {
-            setError(e.message);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: e.message,
+            });
         } finally {
             setLoading(false);
         }
@@ -89,7 +122,7 @@ const Login: FC = () => {
                     </p>
 
                     <div className="w-full transition-opacity duration-300">
-                        {error && <p className="text-red-500">{error}</p>}
+
                         <DynamicForm
                             fields={mode === "login" ? loginFields : signupFields}
                             onSubmit={handleSubmit}
@@ -109,8 +142,9 @@ const Login: FC = () => {
                         </button>
                     </div>
                 </div>
+                <Toaster />
             </div>
-        </div >
+        </div>
     );
 };
 

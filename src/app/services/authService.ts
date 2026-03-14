@@ -1,18 +1,15 @@
-import { getDB, saveDB } from "../lib/db";
-import { delay } from "../lib/delay";
-import { hashPassword } from "../lib/hash";
+import { getRecord, putRecord, delay } from "../lib/db";
 import { v4 as uuid } from "uuid";
+import { hashPassword } from "../lib/hash";
 
-export const signup = async (data: {
-    name: string;
-    email: string;
-    password: string;
-    role: "admin" | "worker";
-}) => {
-    const db = getDB();
 
-    const existing = db.users.find((u: any) => u.email === data.email);
-    if (existing) throw new Error("Email already registered");
+
+export const signup = async (data: any) => {
+    await delay();
+    const existingUser = await getRecord("users", data.email);
+    if (existingUser) {
+        throw new Error("Email already registered");
+    }
 
     const passwordHash = await hashPassword(data.password);
 
@@ -21,24 +18,66 @@ export const signup = async (data: {
         name: data.name,
         email: data.email,
         passwordHash,
-        role: data.role,
+        role: data.role || "worker",
         createdAt: new Date().toISOString(),
     };
 
-    db.users.push(newUser);
-    saveDB(db);
-    await delay()
-    return { ...newUser, passwordHash: undefined };
+    await putRecord("users", newUser);
+
+    const { passwordHash: _, ...safeUser } = newUser;
+    return safeUser;
 };
 
 export const login = async (email: string, password: string) => {
-    const db = getDB();
-    const user = db.users.find((u: any) => u.email === email);
-
-    if (!user) throw new Error("User not found");
+    await delay();
+    const user = await getRecord("users", email);
+    if (!user) {
+        throw new Error("User not found");
+    }
 
     const passwordHash = await hashPassword(password);
-    if (user.passwordHash !== passwordHash) throw new Error("Invalid password");
+    if (user.passwordHash !== passwordHash) {
+        throw new Error("Invalid password");
+    }
+    
+    const { passwordHash: _, ...safeUser } = user;
+    
+    const EIGHT_HOURS = 8 * 60 * 60 * 1000;
+    const sessionData = {
+        user: safeUser, 
+        expiresAt: Date.now() + EIGHT_HOURS,
+    };
+    localStorage.setItem("active_session", JSON.stringify(sessionData));
+    return safeUser;
+};
 
-    return { ...user, passwordHash: undefined };
+export const makeUserAdmin = async (email: string) => {
+    try {
+        const user = await getRecord("users", email);
+        
+        if (!user) {
+            console.error("❌ User not found in database!");
+            return false;
+        }
+
+        user.role = "admin";
+        
+        await putRecord("users", user);
+        console.log(`✅ Success: ${email} is now an ADMIN!`);
+
+        const sessionStr = localStorage.getItem("active_session");
+        if (sessionStr) {
+            const session = JSON.parse(sessionStr);
+            if (session.user.email === email) {
+                session.user.role = "admin";
+                localStorage.setItem("active_session", JSON.stringify(session));
+                console.log("🔄 Active session updated! Refreshing page...");
+                window.location.href = "/";
+            }
+        }
+        return true;
+    } catch (error) {
+        console.error("❌ Failed to update user:", error);
+        return false;
+    }
 };

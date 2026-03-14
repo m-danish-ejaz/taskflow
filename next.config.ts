@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
       {
         source: "/",
         destination: "/Pages/Auth",
-        permanent: true,
+        permanent: false,
       },
     ];
   },
