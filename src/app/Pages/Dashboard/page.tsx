@@ -38,8 +38,8 @@ export default function Page() {
         switch (activeTab) {
             case "dashboard":
                 return user?.role === "admin"
-                    ? <DashboardOverview role="admin" workerId={user?.id} />
-                    : <DashboardOverview role="worker" workerId={user?.id} />;
+                    ? <DashboardOverview role="admin" workerId={user?.id} setActiveTab={setActiveTab} />
+                    : <DashboardOverview role="worker" workerId={user?.id} setActiveTab={setActiveTab} />;
             case "tasks":
                 return user?.role === "admin"
                     ? <TasksScreen />
@@ -58,8 +58,8 @@ export default function Page() {
 
             default:
                 return user?.role === "admin"
-                    ? <DashboardOverview role="admin" workerId={user?.id} />
-                    : <DashboardOverview role="worker" workerId={user?.id} />;
+                    ? <DashboardOverview role="admin" workerId={user?.id} setActiveTab={setActiveTab} />
+                    : <DashboardOverview role="worker" workerId={user?.id} setActiveTab={setActiveTab} />;
         }
     };
 

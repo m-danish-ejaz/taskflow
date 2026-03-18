@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Menu, User, LogOut, Settings, UserIcon } from "lucide-react";
 import { UserData } from "@/app/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { getDashboardStats } from "@/app/services/dashboardService";
 
 interface HeaderProps {
     toggleMobile: () => void;
@@ -21,6 +23,12 @@ export default function Header({ toggleMobile, user, logout, setActiveTab }: Hea
         return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
     };
 
+    const { data: stats } = useQuery({
+        queryKey: ["stats", "worker", user?.id],
+        queryFn: () => getDashboardStats("worker", user?.id),
+        enabled: user?.role === 'worker'
+    });
+    
     return (
         <header className="h-16 bg-white border-b border-slate-300 flex items-center justify-between px-4 lg:px-6 z-30">
             <div className="flex items-center">
@@ -33,6 +41,14 @@ export default function Header({ toggleMobile, user, logout, setActiveTab }: Hea
             </div>
 
             <div className="flex items-center space-x-2 sm:space-x-4">
+                {user?.role === 'worker' && (
+                    <div className="mr-4 px-3 py-1 bg-emerald-50 border border-emerald-100 rounded-full flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-emerald-600 uppercase">Balance</span>
+                        <span className="text-sm font-black text-emerald-700">
+                            ${stats?.totalEarnings?.toFixed(2) || "0.00"}
+                        </span>
+                    </div>
+                )}
                 {/* Profile Dropdown */}
                 <div className="relative">
                     <button
